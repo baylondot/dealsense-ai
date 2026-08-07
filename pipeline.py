@@ -1,22 +1,24 @@
-from scraper import scrape_website
-from research import get_company_context
-from tavily_search import search_company
+from analysis import analyze_company
 
 
-def collect_data(url: str) -> dict:
+def run_pipeline(url: str, refresh: bool = False):
     """
-    Collect all raw data required for analysis.
+    Main orchestration function.
+
+    This is the single entry point for the entire
+    due diligence workflow.
+
+    Future stages:
+    - Cache
+    - Parallel research
+    - Multi-agent execution
+    - Logging
+    - Metrics
     """
 
-    html = scrape_website(url)
+    result = analyze_company(
+        url=url,
+        refresh=refresh
+    )
 
-    clean_text = get_company_context(url)
-
-    external_research = search_company(url)
-
-    return {
-        "url": url,
-        "html": html,
-        "clean_text": clean_text,
-        "external_research": external_research,
-    }
+    return result

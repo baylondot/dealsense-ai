@@ -1,5 +1,5 @@
 import streamlit as st
-
+from pipeline import run_pipeline
 from analysis import analyze_company
 from report import generate_report
 
@@ -29,7 +29,7 @@ if st.button("🔍 Analyze Company", use_container_width=True):
     with st.spinner("Analyzing company..."):
 
         try:
-            result = analyze_company(url)
+            result = run_pipeline(url)
 
         except Exception as e:
             st.error(str(e))

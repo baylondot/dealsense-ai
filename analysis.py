@@ -1,42 +1,14 @@
 import json
 import re
-from pipeline import collect_data
-from research import get_company_context
 
 from llm import client
 from models import CompanyAnalysis
 from prompts import SYSTEM_PROMPT
-from scraper import scrape_website
-from scoring import calculate_score
-from tavily_search import search_company
-from pipeline import collect_data
+
 from constants import DEFAULT_MODEL
-from cache import load_cache, save_cache
 
-def analyze_company(url: str, refresh: bool = False) -> CompanyAnalysis:
-    # Scrape website
-    # website = scrape_website(url)
-   if not refresh:
-    cached = load_cache(url)
-
-    if cached is not None:
-        return cached
-
-    data = collect_data(url)
-    combined_context = f"""
-    Website HTML
-
-    {data["html"]}
-
-    Clean Website
-
-    {data["clean_text"]}
-
-    External Research
-
-    {data["external_research"]}
-    """
-
+def analyze_company(research_context: str) -> CompanyAnalysis:
+    combined_context = research_context
     prompt = f"""
 You are analysing a company for a Private Equity firm.
 
@@ -150,14 +122,5 @@ Rules:
         )
 
     analysis = CompanyAnalysis(**data)
-
-    analysis.acquisition_score = calculate_score(analysis)
-    from recommendation import get_recommendation
-
-    analysis.recommendation = get_recommendation(
-        analysis.acquisition_score
-    )
-
-    save_cache(url, analysis)
 
     return analysis
