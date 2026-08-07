@@ -1,9 +1,10 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class Evidence(BaseModel):
-    title: str
+    source: str = "Other"
+    quote: str = ""
+    confidence: int = Field(default=0, ge=0, le=100)
 
-    quote: str
-
-    source: str
+    def __str__(self) -> str:
+        return f"{self.source} ({self.confidence}/100): {self.quote}"

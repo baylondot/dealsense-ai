@@ -1,25 +1,29 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+
+from evidence import Evidence
 
 
 class InvestmentSignals(BaseModel):
-    is_saas: bool
-    is_b2b: bool
-    is_b2c: bool
+    is_saas: bool = False
+    is_b2b: bool = False
+    is_b2c: bool = False
 
-    recurring_revenue: bool
+    recurring_revenue: bool = False
 
-    ai_company: bool
+    ai_company: bool = False
 
-    enterprise_focus: bool
+    enterprise_focus: bool = False
 
-    marketplace: bool
+    marketplace: bool = False
 
-    subscription_model: bool
+    subscription_model: bool = False
 
-    global_presence: bool
+    global_presence: bool = False
 
-    open_source: bool
+    open_source: bool = False
 
-    mobile_app: bool
+    mobile_app: bool = False
 
-    api_platform: bool
+    api_platform: bool = False
+
+    evidence: dict[str, list[Evidence]] = Field(default_factory=dict)

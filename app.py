@@ -82,6 +82,10 @@ if st.button("🔍 Analyze Company", use_container_width=True):
             with st.container(border=True):
                 st.markdown(f"### {competitor.name}")
                 st.write(competitor.reason)
+                if getattr(competitor, "evidence", None):
+                    for evidence in competitor.evidence:
+                        st.caption(f"{evidence.source} · Confidence: {evidence.confidence}/100")
+                        st.write(f'"{evidence.quote}"')
     else:
         st.write("Not enough information.")
 
@@ -89,7 +93,17 @@ if st.button("🔍 Analyze Company", use_container_width=True):
 
     if result.risks:
         for risk in result.risks:
-            st.markdown(f"- {risk}")
+            with st.container(border=True):
+                if hasattr(risk, "title") and risk.title:
+                    st.markdown(f"### {risk.title}")
+                    if hasattr(risk, "description") and risk.description:
+                        st.write(risk.description)
+                else:
+                    st.markdown(f"- {risk}")
+                if getattr(risk, "evidence", None):
+                    for evidence in risk.evidence:
+                        st.caption(f"{evidence.source} · Confidence: {evidence.confidence}/100")
+                        st.write(f'"{evidence.quote}"')
     else:
         st.write("Not enough information.")
 

@@ -54,12 +54,32 @@ Recommendation:
     report += "\n## Competitors\n\n"
 
     for competitor in company.competitors:
-        report += f"- {competitor.name}: {competitor.reason}\n"
+        if hasattr(competitor, "name"):
+            report += f"- {competitor.name}: {competitor.reason}\n"
+            if getattr(competitor, "evidence", None):
+                for evidence in competitor.evidence:
+                    report += f"  - Source: {evidence.source} | Confidence: {evidence.confidence}/100\n"
+                    report += f"    Quote: \"{evidence.quote}\"\n"
+        else:
+            report += f"- {competitor}\n"
 
     report += "\n## Risks\n\n"
 
     for risk in company.risks:
-        report += f"- {risk}\n"
+        if hasattr(risk, "title"):
+            report += f"- {risk.title}: {risk.description or risk.title}\n"
+            if getattr(risk, "evidence", None):
+                for evidence in risk.evidence:
+                    report += f"  - Source: {evidence.source} | Confidence: {evidence.confidence}/100\n"
+                    report += f"    Quote: \"{evidence.quote}\"\n"
+        else:
+            report += f"- {risk}\n"
+
+    report += "\n## Evidence\n\n"
+
+    for evidence in company.evidence:
+        report += f"- Source: {evidence.source} | Confidence: {evidence.confidence}/100\n"
+        report += f"  Quote: \"{evidence.quote}\"\n"
 
     report += "\n## SWOT\n\n"
 
