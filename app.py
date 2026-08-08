@@ -2,6 +2,7 @@ import streamlit as st
 from pipeline import run_pipeline
 from analysis import analyze_company
 from report import generate_report
+from pdf_report import generate_pdf_report
 
 st.set_page_config(
     page_title="DealSense AI",
@@ -132,6 +133,7 @@ if st.button("🔍 Analyze Company", use_container_width=True):
     st.subheader("Recommendation")
     st.info(result.recommendation)
     report = generate_report(result)
+    pdf_path = generate_pdf_report(result, output_path=f"reports/{result.company}_Investment_Report.pdf")
 
     st.divider()
 
@@ -139,9 +141,12 @@ if st.button("🔍 Analyze Company", use_container_width=True):
 
     st.markdown(report)
 
+    with open(pdf_path, "rb") as pdf_file:
+        pdf_bytes = pdf_file.read()
+
     st.download_button(
-    label="📄 Download Investment Memo",
-    data=report,
-    file_name=f"{result.company}_Investment_Memo.md",
-    mime="text/markdown"
-)
+        label="📄 Download PDF Report",
+        data=pdf_bytes,
+        file_name=f"{result.company}_Investment_Report.pdf",
+        mime="application/pdf",
+    )
