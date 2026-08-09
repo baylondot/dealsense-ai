@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field
 
 from evidence import Evidence
+from news_intelligence import NewsItem
 from signals import InvestmentSignals
 
 
@@ -45,3 +46,4 @@ class CompanyAnalysis(BaseModel):
     acquisition_score: int = 0
     recommendation: str = ""
     evidence: list[Evidence] = Field(default_factory=list)
+    news: list[NewsItem] = Field(default_factory=list)
