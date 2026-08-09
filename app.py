@@ -21,6 +21,13 @@ url = st.text_input(
     placeholder="Enter the Company URL"
 )
 
+if "analysis_result" not in st.session_state:
+    st.session_state.analysis_result = None
+if "pdf_bytes" not in st.session_state:
+    st.session_state.pdf_bytes = None
+if "pdf_filename" not in st.session_state:
+    st.session_state.pdf_filename = None
+
 if st.button("🔍 Analyze Company", use_container_width=True):
 
     if not url:
@@ -36,7 +43,11 @@ if st.button("🔍 Analyze Company", use_container_width=True):
             st.error(str(e))
             st.stop()
 
+    st.session_state.analysis_result = result
     st.success("Analysis Complete!")
+
+if st.session_state.analysis_result is not None:
+    result = st.session_state.analysis_result
 
     st.divider()
 
@@ -133,20 +144,24 @@ if st.button("🔍 Analyze Company", use_container_width=True):
     st.subheader("Recommendation")
     st.info(result.recommendation)
     report = generate_report(result)
-    pdf_path = generate_pdf_report(result, output_path=f"reports/{result.company}_Investment_Report.pdf")
 
     st.divider()
 
     st.subheader("Investment Memo")
-
     st.markdown(report)
 
-    with open(pdf_path, "rb") as pdf_file:
-        pdf_bytes = pdf_file.read()
+    if st.button("📄 Create PDF Report", use_container_width=True):
+        pdf_path = generate_pdf_report(result, output_path=f"reports/{result.company}_Investment_Report.pdf")
 
-    st.download_button(
-        label="📄 Download PDF Report",
-        data=pdf_bytes,
-        file_name=f"{result.company}_Investment_Report.pdf",
-        mime="application/pdf",
-    )
+        with open(pdf_path, "rb") as pdf_file:
+            st.session_state.pdf_bytes = pdf_file.read()
+
+        st.session_state.pdf_filename = f"{result.company}_Investment_Report.pdf"
+
+    if st.session_state.pdf_bytes is not None and st.session_state.pdf_filename:
+        st.download_button(
+            label="📄 Download PDF Report",
+            data=st.session_state.pdf_bytes,
+            file_name=st.session_state.pdf_filename,
+            mime="application/pdf",
+        )

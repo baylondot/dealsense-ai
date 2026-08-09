@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from models import CompanyAnalysis
 from report import generate_report
 
@@ -210,3 +212,13 @@ def test_generate_pdf_report_creates_a_file_from_company_analysis(tmp_path):
     assert generated_path == str(output_path)
     assert output_path.exists()
     assert output_path.stat().st_size > 0
+
+
+def test_app_requires_an_explicit_pdf_generation_button():
+    app_source = Path("app.py").read_text(encoding="utf-8")
+
+    assert 'if st.button("📄 Create PDF Report"' in app_source
+    create_button_index = app_source.index('if st.button("📄 Create PDF Report"')
+    pdf_call_index = app_source.index('generate_pdf_report(')
+
+    assert create_button_index < pdf_call_index
