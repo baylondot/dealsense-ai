@@ -47,3 +47,13 @@ class CompanyAnalysis(BaseModel):
     recommendation: str = ""
     evidence: list[Evidence] = Field(default_factory=list)
     news: list[NewsItem] = Field(default_factory=list)
+
+
+class CompanyComparisonResult(BaseModel):
+    companies: list[CompanyAnalysis] = Field(default_factory=list)
+    metrics: dict = Field(default_factory=dict)
+    rankings: list[str] = Field(default_factory=list)
+    key_differences: list[str] = Field(default_factory=list)
+    winner: str | None = None
+    insights: str = ""
+    evidence: list[Evidence] = Field(default_factory=list)

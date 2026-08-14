@@ -1,4 +1,4 @@
-DEFAULT_MODEL = "google/gemini-2.5-flash-lite"
+DEFAULT_MODEL = "llama-3.3-70b-versatile"
 
 TEMPERATURE = 0.2
 
