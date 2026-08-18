@@ -7,8 +7,33 @@ from cache import load_cache, save_cache
 
 
 def _serialize_company_key(companies: List[CompanyAnalysis]) -> str:
-    names = sorted([c.company or "" for c in companies])
-    return "|".join(names)
+    parts = []
+    for company in sorted(companies, key=lambda c: c.company or ""):
+        signals = getattr(company, "signals", None)
+        signal_summary = ""
+        if signals is not None:
+            signal_summary = ",".join(
+                f"{name}={bool(getattr(signals, name, False))}"
+                for name in [
+                    "is_saas",
+                    "is_b2b",
+                    "is_b2c",
+                    "recurring_revenue",
+                    "ai_company",
+                    "enterprise_focus",
+                    "marketplace",
+                    "subscription_model",
+                    "global_presence",
+                    "open_source",
+                    "mobile_app",
+                    "api_platform",
+                ]
+            )
+        parts.append(
+            f"{company.company or ''}:{int(getattr(company, 'acquisition_score', 0) or 0)}:"
+            f"{company.industry or ''}:{company.business_model or ''}:{signal_summary}"
+        )
+    return "|".join(parts)
 
 
 def compare_companies(companies: List[CompanyAnalysis]) -> CompanyComparisonResult:

@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from pydantic import BaseModel, Field
 
 from evidence import Evidence
@@ -57,3 +59,25 @@ class CompanyComparisonResult(BaseModel):
     winner: str | None = None
     insights: str = ""
     evidence: list[Evidence] = Field(default_factory=list)
+
+
+class Portfolio(BaseModel):
+    id: str = ""
+    name: str = ""
+    description: str = ""
+    companies: list[str] = Field(default_factory=list)
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+
+class PortfolioResult(BaseModel):
+    portfolio_name: str = ""
+    company_count: int = 0
+    companies: list[str] = Field(default_factory=list)
+    metrics: dict = Field(default_factory=dict)
+    risk_summary: dict[str, int] = Field(default_factory=dict)
+    concentration: dict = Field(default_factory=dict)
+    rankings: list[str] = Field(default_factory=list)
+    insights: str = ""
+    evidence: list[Evidence] = Field(default_factory=list)
+    news: list[NewsItem] = Field(default_factory=list)
