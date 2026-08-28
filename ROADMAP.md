@@ -1,250 +1,67 @@
-# DealSense AI — Development Roadmap
-
-## Vision
-
-DealSense AI is an AI-powered due diligence platform built for Private Equity firms, Venture Capital firms, M&A advisors, investment banks, and acquisition professionals.
-
-The goal is to automate company research and produce investment-grade due diligence reports that are explainable, scalable, and visually polished.
-
-This project is being developed with production-quality engineering standards and is intended to evolve into a commercial SaaS platform.
-
----
-
-# Project Status
-
-**Current Version:** v0.1 Alpha
-
-**Current Phase:** Backend Foundation & Intelligence
-
----
-
-# Completed Milestones
-
-## Phase 1 — Project Foundation ✅
-
-* Project structure established
-* Modular architecture
-* Environment configuration
-* OpenRouter integration
-* Gemini model integration
-* Constants and configuration management
-
----
-
-## Phase 2 — AI Analysis Engine ✅
-
-* Structured prompting
-* JSON output
-* Response parsing
-* Pydantic validation
-* Company analysis generation
-
----
-
-## Phase 3 — Research Pipeline ✅
-
-* Website scraping
-* Website text extraction
-* Jina AI Reader integration
-* Tavily Search integration
-* Combined research context
-
----
-
-## Phase 4 — Investment Intelligence ✅
-
-* Acquisition scoring engine
-* Recommendation engine
-* Investment signals
-* SWOT analysis
-* Competitor analysis
-* Business model extraction
-* Risk analysis
-
----
-
-## Phase 5 — Infrastructure ✅
-
-* Local caching
-* Shared constants
-* Centralized prompts
-* Modular codebase
-* GitHub repository
-
----
-
-# Current Development
-
-## Phase 6 — Explainability & Intelligence 🚧
-
-Currently in progress.
-
-Goals:
-
-* Evidence Engine
-* Source attribution
-* Confidence scoring
-* Better competitor reasoning
-* Improved investment signals
-
----
-
-# Upcoming Milestones
-
-## Phase 7 — Professional Reports
-
-Planned features:
-
-* Investment Memo generation
-* Executive summary improvements
-* Downloadable PDF reports
-* Printable reports
-* Report templates
-
----
-
-## Phase 8 — Advanced Research
-
-Planned features:
-
-* News intelligence
-* Funding history
-* Leadership analysis
-* Acquisition history
-* Market trend analysis
-* Technology stack detection
-
----
-
-## Phase 9 — Data Intelligence
-
-Planned features:
-
-* Portfolio comparison
-* Company comparison
-* Historical analysis
-* Saved analyses
-* Search history
-* Similar company detection
-
----
-
-## Phase 10 — API
-
-Planned features:
-
-* FastAPI backend
-* REST API
-* Authentication
-* User accounts
-* Database integration
-* Background jobs
-
----
-
-## Phase 11 — Frontend
-
-The current Streamlit interface is temporary.
-
-The production frontend will be built using:
-
-* Next.js
-* React
-* Tailwind CSS
-* Framer Motion
-
-Features include:
-
-* Modern landing page
-* Authentication
-* Professional dashboard
-* Responsive layouts
-* Premium animations
-* SaaS-quality user experience
-
----
-
-## Phase 12 — Commercial SaaS
-
-Future goals:
-
-* Team workspaces
-* Organizations
-* Subscription plans
-* Billing
-* Usage analytics
-* Admin dashboard
-* Cloud deployment
-* Enterprise features
-
----
-
-# Frontend Vision
-
-The final product will consist of two distinct experiences.
-
-### 1. Marketing Website
-
-A premium landing page inspired by products such as:
-
-* Vercel
-* Linear
-* Stripe
-* Notion
-* Arc
-* Framer
-
-Features:
-
-* Approximately 6–8 full-screen sections
-* Smooth scrolling
-* Fade-in and fade-out animations
-* Modern typography
-* Responsive layouts
-* Interactive graphics
-* Strong visual storytelling
-* Clear call-to-action leading into the application
-
----
-
-### 2. Analysis Workspace
-
-After selecting **Go to Analyze**, users enter a dedicated application workspace.
-
-The workspace will focus on productivity rather than marketing.
-
-Goals:
-
-* Clean layout
-* Fast workflow
-* Modern cards
-* Responsive design
-* Elegant visual hierarchy
-* Rich analysis panels
-* Interactive charts
-* Professional report presentation
-
-The interface should feel like a modern SaaS product rather than a legacy enterprise application.
-
----
-
-# Engineering Principles
-
-Throughout development, the project follows these principles:
-
-* Modular architecture
-* Single Responsibility Principle
-* Production-quality implementations
-* Maintainable code
-* Backward compatibility where practical
-* Reusable components
-* Scalable design
-* Clear separation of concerns
-
----
-
-# Long-Term Goal
-
-Build DealSense AI into a platform capable of producing professional due diligence reports that investment firms can rely on, while delivering a user experience comparable to leading modern SaaS products.
-
-Every new feature should contribute toward this vision while maintaining code quality, scalability, and a polished user experience.
+# DealSense AI - Roadmap
+
+The repository is currently a v0.1-style backend foundation with a functional Streamlit interface and a minimal FastAPI surface. Status below reflects source code, not earlier plans.
+
+## Completed
+
+- Modular Python project structure and shared constants.
+- LLM-driven structured company analysis with JSON parsing and Pydantic validation.
+- Jina website research and Tavily external research in the active pipeline.
+- Deterministic acquisition scoring and recommendation generation.
+- Company metadata, products, customers, competitors, risks, SWOT, investment signals, and evidence models.
+- News intelligence collection and normalization attached to pipeline results.
+- Deterministic comparison over two or more existing company analyses.
+- Lightweight portfolio creation, membership, aggregation, concentration counts, rankings, and reuse of existing intelligence.
+- Investment memo generation.
+- Explicit ReportLab PDF creation and Streamlit download workflow.
+- Local pickle cache, currently used by comparison.
+- Streamlit one-company analysis workflow.
+- FastAPI `GET /health` and `POST /api/analyze` endpoints with URL validation, pipeline delegation, CORS, and error mapping.
+
+## Integration / Stabilization
+
+- Connect comparison and portfolio operations to an application workflow or API if those workflows are needed.
+- Add dedicated Streamlit/API presentation for news and the full top-level evidence collection.
+- Decide and implement the normal-analysis cache policy; the pipeline's `refresh` parameter currently has no effect.
+- Decide whether the direct scraper utility should remain separate or be integrated; the active pipeline uses Jina Reader.
+- Strengthen runtime and integration validation around external credentials, LLM output, research failures, and generated files.
+- Confirm test-suite execution in the target environment. Existing tests cover API, evidence/memo/PDF, comparison, and portfolio behavior, but passing status is not inferred from their presence.
+- Keep PDF/report generation explicitly user-triggered and prevent unintended filesystem side effects.
+
+## Next
+
+- Stabilize the existing backend contracts and API response behavior.
+- Add only the API routes required to expose existing comparison, evidence, news, memo, report, or portfolio functionality.
+- Establish persistence and history requirements before adding database-backed features.
+- Improve analysis quality and evidence/source presentation based on verified test cases.
+- Define a frontend/backend contract before building a new frontend.
+
+## Future
+
+- Planned frontend: a modern premium SaaS experience inspired by Linear/Vercel, with elegant typography, subtle gradients, smooth transitions, scroll-based reveal/fade animations, and responsive desktop/tablet/mobile behavior.
+- Planned landing page: approximately 6-8 major narrative sections, transitioning into focused workspaces rather than making users operate inside a long scrolling page.
+- Planned workspaces: analysis, comparison, evidence, news intelligence, portfolio, and report/memo presentation.
+- Planned API evolution: expose existing backend functionality through FastAPI without duplicating backend intelligence.
+- Authentication, user accounts, saved analyses, research history, database persistence, background jobs, usage analytics, team workspaces, billing, and deployment infrastructure.
+
+## Frontend Plan / Not Implemented
+
+The intended frontend is explicitly future work. No React, Next.js, JavaScript, TypeScript, Tailwind, or Framer Motion application is currently verified. The intended boundary is:
+
+```text
+Frontend -> FastAPI API -> Existing DealSense Python backend
+```
+
+The landing page should tell a scrolling product story, then hand users into focused workspaces for repeated diligence work. This plan must not be treated as an implemented interface.
+
+## Engineering Rules
+
+1. Inspect existing functionality before creating anything.
+2. Never duplicate an existing component or intelligence engine.
+3. Reuse existing models and services.
+4. Do not modify working backend logic merely to accommodate a new UI.
+5. Keep frontend and backend separated through APIs.
+6. Avoid unintended side effects.
+7. Generate PDFs/reports only when explicitly requested.
+8. Reuse existing evidence and news functionality.
+9. Test existing functionality after modifications.

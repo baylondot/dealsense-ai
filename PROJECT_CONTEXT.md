@@ -1,309 +1,92 @@
-# DealSense AI — Project Context & Engineering Instructions
+# DealSense AI - Project Context
 
-You are joining an existing software project called **DealSense AI**. Your job is to continue building it as a senior software engineer while preserving the existing architecture and avoiding unnecessary refactors.
+## Product
 
----
+DealSense AI is a Python due-diligence application for Private Equity, Venture Capital, M&A, investment banking, and acquisition users. A user supplies a company URL and receives structured company intelligence, investment signals, risks, SWOT analysis, an acquisition score, a recommendation, evidence, and recent news when available.
 
-# Project Vision
+The repository is the source of truth. This document describes verified current behavior and separates it from future product direction.
 
-DealSense AI is an AI-powered Due Diligence platform for Private Equity, Venture Capital, M&A advisors, Investment Banks, and Acquisition firms.
+## Current Capabilities
 
-The goal is to allow a user to enter a company website and receive a professional investment-grade analysis that includes research, risk assessment, acquisition scoring, and actionable recommendations.
+### Completed
 
-This should eventually feel like a modern SaaS platform that firms could genuinely subscribe to—not a student project or a demo.
+- Company analysis through `analysis.py`, using structured JSON from an OpenAI-compatible client configured for a Groq-compatible endpoint and the model in `constants.py`.
+- Website context collection through Jina AI Reader in `research.py` and external company research through Tavily in `tavily_search.py`.
+- Pydantic models for company analysis, SWOT, competitors, risks, signals, evidence, news, comparison results, and portfolio results.
+- Deterministic acquisition scoring in `scoring.py` and recommendation mapping in `recommendation.py`.
+- Evidence normalization and confidence-bearing evidence objects in `evidence.py` and the analysis models.
+- News collection and normalization in `news_intelligence.py`, including filtering, deduplication, event classification, investment impact, and evidence.
+- Deterministic comparison of two or more existing `CompanyAnalysis` objects in `compare.py`.
+- In-memory portfolio creation, membership management, metric aggregation, risk aggregation, concentration counts, ranking, and reuse of comparison/evidence/news data in `portfolio.py`.
+- Investment memo text generation in `report.py`.
+- Explicit PDF generation and download from the Streamlit application through `pdf_report.py`. PDF generation is not automatic.
+- File-backed pickle caching in `cache.py`; currently used by comparison, not by the ordinary company-analysis pipeline.
+- FastAPI `GET /health` and `POST /api/analyze` endpoints.
 
-The long-term objective is to produce software comparable in quality, polish, and usability to products used by firms like Pocket Fund.
+### Partially Implemented / Integration Required
 
----
+- `pipeline.py` collects Jina context, Tavily research, and news, then calls analysis and attaches news. Its `refresh` argument is accepted but currently has no effect.
+- Evidence and news are present in returned models and backend output. Streamlit shows evidence for competitors and risks, but has no dedicated news view or complete top-level evidence view.
+- Comparison and portfolio are callable backend modules only. They are not connected to Streamlit or the API.
+- Streamlit supports one-company analysis, memo display, and explicit PDF creation, but remains a basic temporary interface.
+- `scraper.py` provides direct BeautifulSoup scraping but is not used by the current pipeline, which uses Jina Reader.
+- Caching exists but is not a complete cache strategy for normal analysis runs.
 
-# Current Backend
+### Planned
 
-The backend already exists and should be treated as the source of truth.
+- A production frontend and dedicated analysis, comparison, evidence, news, portfolio, and report workspaces.
+- Additional API endpoints exposing existing backend functionality.
+- Authentication, persistence/database support, background jobs, history, analytics, and commercial SaaS features.
 
-Current architecture includes modules such as:
+## Technical Stack Verified in Repository
 
-* app.py
-* analysis.py
-* pipeline.py
-* scraper.py
-* research.py
-* tavily_search.py
-* llm.py
-* prompts.py
-* models.py
-* scoring.py
-* recommendation.py
-* cache.py
-* constants.py
+- Python, Streamlit, FastAPI, and Pydantic
+- OpenAI Python client configured with a Groq-compatible base URL
+- Jina AI Reader via HTTP requests
+- Tavily Search
+- Requests and BeautifulSoup
+- ReportLab for PDF output
+- Local pickle files under `cache/`
 
-The project currently uses:
+No React, Next.js, JavaScript, TypeScript, database, Redis, Docker, or deployment configuration is currently verified in the repository.
 
-* Python
-* Streamlit (temporary frontend)
-* OpenRouter
-* Google Gemini models through OpenRouter
-* Jina AI Reader
-* Tavily Search
-* Pydantic
-* JSON structured outputs
+## Current Interfaces
 
-Do not recreate these files or duplicate their responsibilities.
+The current user interface is Streamlit. The API currently exposes only:
 
-Always inspect the existing implementation before suggesting changes.
+- `GET /health`
+- `POST /api/analyze`, accepting a URL and optional `refresh`, returning `CompanyAnalysis`
 
----
+The API has configurable CORS origins and defaults to local ports 3000 and 5173. No comparison, evidence, news, memo, report, or portfolio endpoint is currently implemented.
 
-# Engineering Rules
+## Frontend Plan / Future
 
-Follow these principles throughout development.
+The intended frontend is a modern premium SaaS experience inspired by Linear and Vercel: responsive, typographically polished, with subtle gradients, smooth transitions, and scroll-based reveal/fade motion. The planned landing page has approximately 6-8 narrative sections, then transitions into focused workspaces for analysis, comparison, evidence, news, portfolio, and report/memo presentation across desktop, tablet, and mobile.
 
-## 1. Never invent architecture
+This frontend does not currently exist. The intended separation is:
 
-If a function or module does not exist, do not assume it exists.
+```text
+Frontend -> FastAPI API -> Existing DealSense Python backend
+```
 
-Inspect the codebase before proposing changes.
+The API should expose existing functionality rather than duplicate intelligence engines.
 
-Never ask the user to recreate already existing functionality.
+## Architectural Principles for Future Agents
 
----
+1. Inspect existing functionality before creating anything.
+2. Never duplicate an existing component, model, service, or intelligence engine.
+3. Reuse existing models and external services.
+4. Do not modify working backend logic merely to accommodate a new UI.
+5. Keep frontend and backend separated through APIs.
+6. Avoid unintended side effects.
+7. Generate PDFs/reports only when explicitly requested.
+8. Reuse existing evidence and news functionality rather than duplicating it.
+9. Test existing functionality after modifications.
 
-## 2. Single Responsibility Principle
+## Known Limitations
 
-Each module should have one clear responsibility.
-
-Examples:
-
-* scraper.py → obtain website HTML
-* research.py → clean and prepare research
-* tavily_search.py → external research
-* analysis.py → AI analysis only
-* scoring.py → scoring only
-* recommendation.py → recommendations only
-* pipeline.py → orchestration only
-
----
-
-## 3. Backward Compatibility
-
-Never break existing working code.
-
-When introducing improvements:
-
-* extend
-* refactor carefully
-* preserve existing functionality
-
-Avoid large breaking changes.
-
----
-
-## 4. Production Quality
-
-Avoid temporary fixes.
-
-Avoid hacks.
-
-Avoid duplicated logic.
-
-Prefer maintainable solutions over quick ones.
-
----
-
-## 5. Think Like a Startup
-
-Assume this project will become a commercial SaaS product.
-
-Every decision should scale.
-
----
-
-# Planned Backend Roadmap
-
-Continue implementing professional PE features including:
-
-* Better acquisition scoring
-* Evidence engine
-* Source attribution
-* Company comparison
-* Portfolio analysis
-* Investment memo generation
-* PDF exports
-* Research history
-* News intelligence
-* Multi-source research
-* Better caching
-* API endpoints
-* Authentication
-* Database support
-* Usage analytics
-
-Prefer adding capabilities instead of repeatedly reorganizing architecture.
-
----
-
-# Frontend Vision (Extremely Important)
-
-The current Streamlit UI is temporary.
-
-The final frontend should be built using a modern JavaScript framework (preferably React + Next.js) while keeping the Python backend intact.
-
-The frontend should feel like a premium SaaS product launched in 2026.
-
-It must NOT resemble:
-
-* legacy banking software
-* enterprise software from the early 2000s
-* school management systems
-* CRUD dashboards with basic tables
-
-Instead, the inspiration should come from companies such as:
-
-* Vercel
-* Linear
-* Stripe
-* Notion
-* Arc Browser
-* Raycast
-* Framer
-* Clerk
-* Supabase
-
-The visual quality should be high enough that users immediately perceive it as a premium commercial platform.
-
----
-
-# Landing Experience
-
-The landing experience should be a storytelling website rather than a dashboard.
-
-Approximately 6–8 full-screen sections should appear while scrolling.
-
-Examples of sections:
-
-1. Hero
-2. Product Overview
-3. AI Research Engine
-4. Due Diligence Features
-5. Acquisition Intelligence
-6. Workflow Demonstration
-7. Testimonials / Trust
-8. Pricing / Call to Action
-
-Each section should use smooth transitions.
-
-Preferred interactions include:
-
-* fade-in
-* fade-out
-* slide
-* subtle parallax
-* staggered animations
-* animated cards
-* animated graphs
-* responsive illustrations
-* elegant motion
-* modern typography
-
-Animations should enhance usability rather than distract.
-
-The experience should feel similar to premium SaaS marketing sites.
-
----
-
-# Application Workspace
-
-After clicking "Start Analysis" or "Go to Analyze", users should enter a completely different interface.
-
-This workspace should be focused, distraction-free, and productivity-oriented.
-
-Think of products like:
-
-* Linear
-* Notion
-* Cursor
-* Vercel Dashboard
-
-The workspace should prioritize clarity over decoration.
-
----
-
-# Analysis Dashboard
-
-The analysis page should display information using modern cards and layouts rather than long paragraphs.
-
-Possible sections include:
-
-* Executive Summary
-* Business Model
-* Products
-* Customers
-* Competitors
-* SWOT
-* Investment Signals
-* Risks
-* Acquisition Score
-* Recommendation
-* Evidence
-* Sources
-
-Cards should automatically adapt to screen size.
-
-Avoid dense tables whenever possible.
-
----
-
-# Responsiveness
-
-The interface must work well on:
-
-* Desktop
-* Laptop
-* Tablet
-* Mobile
-
-Animations should remain smooth across screen sizes.
-
----
-
-# Design Philosophy
-
-Less clutter.
-
-More whitespace.
-
-Elegant typography.
-
-Rounded corners.
-
-Subtle shadows.
-
-Professional color palette.
-
-Fluid motion.
-
-Responsive layouts.
-
-High-quality icons.
-
-Meaningful micro-interactions.
-
-The UI should communicate trust and professionalism suitable for financial decision-making.
-
----
-
-# Development Workflow
-
-Before making architectural changes:
-
-1. Read the existing implementation.
-2. Understand current responsibilities.
-3. Extend rather than replace.
-4. Explain why a change is needed.
-
-Never suggest rebuilding working modules unnecessarily.
-
----
-
-# Goal
-
-By the end of development, DealSense AI should look and feel like a venture-backed SaaS platform that a Private Equity firm could confidently adopt, while maintaining clean architecture, production-quality engineering, and an exceptional user experience.
+- Research and LLM calls depend on external services and environment credentials.
+- Normal analysis is not cached by the current pipeline, and `refresh` is not operational.
+- Portfolio data is lightweight and in memory; no persistence layer is verified.
+- Comparison and portfolio operations require existing `CompanyAnalysis` objects and have no application/API workflow.
+- The production frontend, authentication, user accounts, history, and deployment system are not implemented.

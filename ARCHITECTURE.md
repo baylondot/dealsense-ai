@@ -1,366 +1,103 @@
-# DealSense AI — Architecture
+# DealSense AI - Architecture
 
-## Overview
+## Current Architecture
 
-DealSense AI is an AI-powered due diligence platform designed for Private Equity firms, Venture Capital firms, M&A advisors, investment banks, and acquisition professionals.
+DealSense AI is a modular Python backend with two current entry surfaces: Streamlit in `app.py` and FastAPI in `api/main.py`.
 
-The system follows a modular architecture where each module has a single primary responsibility. The objective is to keep the codebase maintainable, extensible, and production-ready.
-
----
-
-# High-Level Flow
-
-```
-User
-    │
-    ▼
-Streamlit UI (Temporary)
-    │
-    ▼
-pipeline.py
-    │
-    ▼
-analysis.py
-    │
-    ├───────────────► scraper.py
-    │
-    ├───────────────► research.py
-    │
-    ├───────────────► tavily_search.py
-    │
-    ▼
-OpenRouter
-(Gemini Model)
-    │
-    ▼
-JSON Response
-    │
-    ▼
-Pydantic Models
-    │
-    ▼
-Scoring Engine
-    │
-    ▼
-Recommendation Engine
-    │
-    ▼
-Cache
-    │
-    ▼
-Streamlit UI
+```text
+Streamlit or POST /api/analyze
+              |
+        pipeline.run_pipeline
+              |
+   Jina website context + Tavily research
+              |
+   Tavily company-news collection (best effort)
+              |
+        analysis.analyze_company
+              |
+   OpenAI-compatible LLM -> JSON -> Pydantic
+              |
+   evidence normalization -> CompanyAnalysis
+              |
+   scoring.calculate_score / recommendation.get_recommendation
+              |
+   Streamlit response or API response
 ```
 
----
+The pipeline catches failures from external research and news collection and continues with empty context/results. LLM or validation failures are not similarly hidden by the pipeline.
 
-# Module Responsibilities
+## Modules and Data Models
 
-## app.py
+- `app.py`: Streamlit form, analysis display, evidence display for competitors/risks, memo display, and explicit PDF creation/download.
+- `pipeline.py`: orchestration entry point. It derives a company name from the URL, gathers Jina context, Tavily research, and news, then calls analysis.
+- `research.py`: Jina AI Reader website text retrieval.
+- `scraper.py`: direct Requests/BeautifulSoup text extraction utility; not used by the current pipeline path.
+- `tavily_search.py`: external company research context.
+- `news_intelligence.py`: Tavily news collection, filtering, deduplication, dates, controlled event types, impact classification, confidence, and evidence.
+- `analysis.py`: prompt construction, LLM call, JSON cleanup/parsing, `CompanyAnalysis` validation, and evidence normalization.
+- `prompts.py`: system prompt source.
+- `llm.py`: OpenAI client configuration using environment credentials and a Groq-compatible base URL.
+- `models.py`: `CompanyAnalysis`, `SWOT`, `Competitor`, `Risk`, `CompanyComparisonResult`, `Portfolio`, and `PortfolioResult`.
+- `signals.py`: boolean investment signals and signal evidence mapping.
+- `evidence.py`: evidence model with source, quote, and 0-100 confidence.
+- `scoring.py`: deterministic score from supported investment signals, product count, and risk count, bounded by constants.
+- `recommendation.py`: score-to-recommendation mapping.
+- `cache.py`: MD5-keyed local pickle storage.
+- `compare.py`: comparison over existing analyses, with comparison-specific cache use, score ranking, signal matrix, differences, winner, and deterministic insights. It does not generate PDFs or files.
+- `portfolio.py`: lightweight portfolio aggregation over supplied analyses; it reuses comparison, evidence, and news data.
+- `report.py`: deterministic Markdown investment memo.
+- `pdf_report.py`: ReportLab PDF generation from one `CompanyAnalysis`.
 
-Purpose
+`CompanyAnalysis` contains company metadata, products, customers, competitors, risks, SWOT, signals, acquisition score, recommendation, evidence, and news.
 
-The temporary Streamlit interface.
+## External Services
 
-Responsibilities
+- Jina AI Reader is called by `research.py`.
+- Tavily is called for external research and, independently, normalized company news.
+- The OpenAI client in `llm.py` calls the configured Groq-compatible endpoint using `DEFAULT_MODEL`.
+- ReportLab is local PDF generation, not a remote service.
 
-* Accept company URL
-* Trigger pipeline
-* Display analysis
-* Display scores
-* Display recommendations
+Credentials and exact runtime availability depend on environment variables and installed dependencies. No database or hosted persistence service is verified.
 
-Should NOT
+## Caching
 
-* Contain business logic
-* Call LLMs directly
-* Parse JSON
-* Perform research
+`cache.py` stores Python objects as pickle files in `cache/`. `compare.py` uses it for comparison results. `pipeline.py` accepts `refresh` but does not read or write the cache, so normal company analyses are not cached through the orchestration path.
 
----
+## Evidence and News Flows
 
-## pipeline.py
+The LLM schema requests evidence for competitors, risks, and each signal. `analysis.py` normalizes missing evidence to conservative placeholder evidence. News items receive source, URL, date, event type, investment impact, confidence, and evidence. News is attached to the returned `CompanyAnalysis` by `pipeline.py`; it is available to API consumers and portfolio aggregation, but has no dedicated Streamlit display.
 
-Purpose
+## Comparison and Portfolio Flows
 
-Single entry point into the backend.
+Comparison accepts at least two existing `CompanyAnalysis` objects. It reuses existing scores where present, calculates missing scores, builds signal metrics and rankings, identifies field differences, and returns `CompanyComparisonResult`.
 
-Responsibilities
+Portfolio models store company names rather than duplicate analyses. `summarize_portfolio` resolves those names against caller-supplied analyses, calculates score metrics, aggregates risk titles, counts industry/business-model/signal concentration, ranks companies, and reuses comparison/evidence/news data. Neither flow has a Streamlit or FastAPI route.
 
-* Start the due diligence workflow
-* Coordinate backend execution
-* Provide a stable entry point for the frontend
+## Memo and PDF Flow
 
-Current Responsibilities
+`report.generate_report` returns a Markdown investment memo from a `CompanyAnalysis`. The Streamlit app displays it after analysis. PDF output is created only when the user presses the explicit PDF button; `pdf_report.py` writes the requested report path and the app provides it as a download. Comparison and portfolio functions do not generate PDFs.
 
-* Invoke analysis
-* Pass refresh options
+## API Layer
 
-Future Responsibilities
+FastAPI currently provides:
 
-* Workflow orchestration
-* Logging
-* Metrics
-* Parallel execution
-* Background jobs
+- `GET /health`
+- `POST /api/analyze`
 
----
+`/api/analyze` validates `HttpUrl`, forwards the normalized URL and `refresh` flag to `run_pipeline`, returns `CompanyAnalysis`, and maps pipeline exceptions to HTTP 502. CORS defaults to local frontend development ports. Comparison, evidence, news, memo, PDF, and portfolio APIs are not currently implemented.
 
-## analysis.py
+## Planned Architecture
 
-Purpose
+```text
+Planned frontend workspaces
+              |
+        FastAPI API layer
+              |
+        Existing Python backend
+```
 
-Core AI analysis engine.
+The planned frontend is a responsive premium SaaS interface with a roughly 6-8 section scrolling landing narrative, followed by focused analysis, comparison, evidence, news, portfolio, and report/memo workspaces. React/Next.js, Tailwind, Framer Motion, authentication, persistence, background work, and additional routes remain future work unless later verified in source.
 
-Responsibilities
+## Future-Agent Safety Rules
 
-* Collect research from internal modules
-* Build the LLM prompt
-* Call OpenRouter
-* Parse JSON response
-* Validate with Pydantic
-* Calculate acquisition score
-* Generate recommendation
-* Save and load cache
-
-Should NOT
-
-* Render UI
-* Store application state
-* Handle frontend logic
-
----
-
-## scraper.py
-
-Purpose
-
-Website scraping.
-
-Responsibilities
-
-* Download website content
-* Extract readable HTML/text
-
-Should NOT
-
-* Analyze companies
-* Score businesses
-
----
-
-## research.py
-
-Purpose
-
-Research preprocessing.
-
-Responsibilities
-
-* Convert website content into cleaner context
-* Improve information quality before sending to the LLM
-
----
-
-## tavily_search.py
-
-Purpose
-
-External web intelligence.
-
-Responsibilities
-
-* Search for company information beyond the website
-* Improve analysis with external context
-
----
-
-## llm.py
-
-Purpose
-
-LLM configuration.
-
-Responsibilities
-
-* Configure OpenRouter
-* Store client initialization
-* Centralize model access
-
-Should NOT
-
-* Contain prompts
-* Contain analysis logic
-
----
-
-## prompts.py
-
-Purpose
-
-Prompt management.
-
-Responsibilities
-
-* Store system prompts
-* Store prompt templates
-* Keep prompting separate from business logic
-
----
-
-## models.py
-
-Purpose
-
-Structured data models.
-
-Responsibilities
-
-* Pydantic validation
-* Data structures
-* Type safety
-
-Primary Models
-
-* CompanyAnalysis
-* Product
-* SWOT
-* Competitor
-* Signals
-
----
-
-## scoring.py
-
-Purpose
-
-Investment scoring engine.
-
-Responsibilities
-
-* Evaluate investment quality
-* Calculate acquisition score
-* Apply scoring rules
-
-Should NOT
-
-* Call AI
-* Parse JSON
-
----
-
-## recommendation.py
-
-Purpose
-
-Recommendation engine.
-
-Responsibilities
-
-Convert acquisition score into an investment recommendation.
-
-Example
-
-* Strong Buy
-* Buy
-* Watch
-* Avoid
-
----
-
-## cache.py
-
-Purpose
-
-Local caching.
-
-Responsibilities
-
-* Save completed analyses
-* Load previous analyses
-* Reduce repeated API calls
-
----
-
-## constants.py
-
-Purpose
-
-Shared configuration.
-
-Responsibilities
-
-* Default model
-* Shared constants
-* Configuration values
-
----
-
-# Current Technology Stack
-
-Backend
-
-* Python
-* Streamlit
-* Pydantic
-* OpenRouter
-* Gemini
-* Jina AI
-* Tavily Search
-
-Future Frontend
-
-* React
-* Next.js
-* Tailwind CSS
-* Framer Motion
-
-Future Backend
-
-* FastAPI
-* PostgreSQL
-* Redis
-* Docker
-
----
-
-# Design Principles
-
-The architecture follows these principles:
-
-* Single Responsibility Principle
-* Modular design
-* Production-ready code
-* Minimal duplication
-* Reusable components
-* Clear separation of concerns
-* Extensible architecture
-
----
-
-# Current Development Phase
-
-The backend foundation is complete.
-
-Current focus:
-
-* AI analysis quality
-* Research quality
-* Evidence engine
-* Investment intelligence
-
-The frontend redesign will begin after the backend reaches a stable production-ready state.
-
----
-
-# Long-Term Vision
-
-The Streamlit interface is temporary.
-
-The final product will consist of:
-
-* A premium Next.js marketing website with multiple animated landing sections inspired by modern SaaS products.
-* A dedicated authenticated application workspace for due diligence.
-* A scalable Python API powering the frontend.
-* A professional SaaS platform suitable for subscription by investment firms.
-
-The backend should continue evolving independently so it can later support web, desktop, or API clients without major architectural changes.
+Inspect implementation before adding anything. Never duplicate an existing component or intelligence engine. Reuse existing models, services, evidence, news, scoring, and caching where appropriate. Do not alter working backend logic merely for a UI. Keep frontend/backend concerns separated through APIs, avoid unintended side effects, create PDFs only on explicit request, and run tests after modifications.
