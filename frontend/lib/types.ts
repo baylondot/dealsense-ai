@@ -11,18 +11,25 @@ export type SignalMap = {
   open_source: boolean;
   mobile_app: boolean;
   api_platform: boolean;
+  evidence: Record<string, Evidence[]>;
 };
 
 export type Evidence = {
-  source?: string;
-  quote?: string;
-  confidence?: number;
+  source: string;
+  quote: string;
+  confidence: number;
 };
 
 export type Competitor = {
   name: string;
-  reason?: string;
-  evidence?: Evidence[];
+  reason: string;
+  evidence: Evidence[];
+};
+
+export type Risk = {
+  title: string;
+  description: string;
+  evidence: Evidence[];
 };
 
 export type NewsItem = {
@@ -44,8 +51,8 @@ export type CompanyAnalysis = {
   business_model: string;
   products: string[];
   customers: string[];
-  competitors: Competitor[];
-  risks: string[];
+  competitors: Array<Competitor | string>;
+  risks: Array<Risk | string>;
   swot: {
     strengths: string[];
     weaknesses: string[];
@@ -55,8 +62,8 @@ export type CompanyAnalysis = {
   signals: SignalMap;
   acquisition_score: number;
   recommendation: string;
-  evidence?: Evidence[];
-  news?: NewsItem[];
+  evidence: Evidence[];
+  news: NewsItem[];
 };
 
 export type AnalyzeResponse = CompanyAnalysis;

@@ -12,22 +12,27 @@ export default function AnalysisView() {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!url.trim()) return;
+    if (!url.trim()) {
+      setStatus("Enter a company URL to begin.");
+      return;
+    }
     try {
-      new URL(url);
+      const parsedUrl = new URL(url.trim());
+      if (!['http:', 'https:'].includes(parsedUrl.protocol) || !parsedUrl.hostname) throw new Error();
     } catch {
       setStatus("Enter a valid company URL, for example https://company.com");
       return;
     }
     setBusy(true);
     setResult(null);
-    setStatus("Running company intelligence…");
+    setStatus("Researching company. The backend may take a moment.");
     try {
       const data = await analyzeCompany(url.trim());
       setResult(data);
       setStatus("Analysis ready.");
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Analysis failed.");
+      console.error("Company analysis failed", error);
+      setStatus(error instanceof Error ? error.message : "Unable to analyze this company right now. Please try again.");
     } finally {
       setBusy(false);
     }
@@ -36,7 +41,7 @@ export default function AnalysisView() {
   return (
     <>
       <div className="app-header">
-        <div><div className="eyebrow">Company intelligence</div><h1 className="app-title">Analyze a company</h1><div className="muted">Run the existing DealSense analysis through the API when available, or use isolated mock mode.</div></div>
+        <div><div className="eyebrow">Company intelligence</div><h1 className="app-title">Analyze a company</h1><div className="muted">Run the existing DealSense analysis through the backend.</div></div>
       </div>
 
       <div className="workspace">
@@ -74,12 +79,12 @@ export default function AnalysisView() {
           <div className="result-grid">
             <div className="result-card"><h3>SWOT — Strengths</h3><ul className="result-list">{result.swot.strengths.map(x=><li key={x}>{x}</li>)}</ul></div>
             <div className="result-card"><h3>SWOT — Weaknesses</h3><ul className="result-list">{result.swot.weaknesses.map(x=><li key={x}>{x}</li>)}</ul></div>
-            <div className="result-card"><h3>Risks</h3><ul className="result-list">{result.risks.map(x=><li key={x}>{x}</li>)}</ul></div>
+            <div className="result-card"><h3>Risks</h3><ul className="result-list">{result.risks.map((risk, index)=><li key={index}>{typeof risk === "string" ? risk : risk.description || risk.title}</li>)}</ul></div>
           </div>
 
           <div className="result-card">
             <h3>Competitors</h3>
-            <div className="evidence">{result.competitors.map(c=><div className="evidence-item" key={c.name}><strong>{c.name}</strong><p>{c.reason}</p></div>)}</div>
+            <div className="evidence">{result.competitors.map((competitor, index)=>{ const item = typeof competitor === "string" ? { name: competitor, reason: "" } : competitor; return <div className="evidence-item" key={`${item.name}-${index}`}><strong>{item.name}</strong><p>{item.reason}</p></div>; })}</div>
           </div>
 
           <div className="result-card">

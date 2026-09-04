@@ -8,8 +8,8 @@ export const mockAnalysis: CompanyAnalysis = {
   products: ["Workflow platform", "Analytics", "Automation", "API"],
   customers: ["Operations teams", "Technology companies", "Mid-market enterprises"],
   competitors: [
-    { name: "Competitor One", reason: "Overlaps in workflow automation and analytics." },
-    { name: "Competitor Two", reason: "Targets a similar B2B customer segment." }
+    { name: "Competitor One", reason: "Overlaps in workflow automation and analytics.", evidence: [] },
+    { name: "Competitor Two", reason: "Targets a similar B2B customer segment.", evidence: [] }
   ],
   risks: ["Competitive pressure", "Customer concentration", "Limited public financial information"],
   swot: {
@@ -30,7 +30,8 @@ export const mockAnalysis: CompanyAnalysis = {
     global_presence: true,
     open_source: false,
     mobile_app: false,
-    api_platform: true
+    api_platform: true,
+    evidence: {}
   },
   acquisition_score: 76,
   recommendation: "Attractive candidate for deeper diligence, with particular attention to retention, customer concentration and competitive differentiation.",
